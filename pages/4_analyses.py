@@ -1,52 +1,97 @@
 import streamlit as st
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 from utils import load_data
 
-st.markdown("## 📈 Analyses")
+st.title("📈 Analyses avancées")
+st.markdown("---")
 
+# Charger les données
 df = load_data()
 
-if df is not None and len(df) >= 2:
-    df["duree_heures"] = pd.to_numeric(df["duree_heures"], errors="coerce")
-    df["impact_numerique"] = pd.to_numeric(df["impact_numerique"], errors="coerce")
-    df_clean = df.dropna(subset=["duree_heures", "impact_numerique"])
+if df is not None and not df.empty:
+    # Analyse temporelle
+    st.subheader("⏰ Analyse temporelle")
     
-    tab1, tab2 = st.tabs(["📐 Régression", "🔄 ACP"])
+    col1, col2 = st.columns(2)
     
-    with tab1:
-        X = df_clean['duree_heures'].values.reshape(-1, 1)
-        y = df_clean['impact_numerique'].values
-        
-        reg = LinearRegression()
-        reg.fit(X, y)
-        
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.scatter(X, y, alpha=0.7, color='#FF6B35', s=60)
-        ax.plot(sorted(X.flatten()), reg.predict(sorted(X)), color='#3D7FFF', linewidth=2)
-        ax.set_xlabel("Durée (heures)")
-        ax.set_ylabel("Personnes touchées")
-        st.pyplot(fig)
-        
-        col1, col2 = st.columns(2)
-        col1.metric("Coefficient", f"{reg.coef_[0]:.2f}")
-        col2.metric("R²", f"{reg.score(X, y):.3f}")
+    with col1:
+        # Heures de pointe
+        df['heure'] = df['heure_debut'].str[:2].astype(int)
+        heure_counts = df['heure'].value_counts().sort_index()
+        fig_heures = px.bar(
+            x=heure_counts.index,
+            y=heure_counts.values,
+            title="Distribution par heure de début",
+            labels={'x': 'Heure', 'y': 'Nombre de coupures'}
+        )
+        st.plotly_chart(fig_heures, use_container_width=True)
     
-    with tab2:
-        if len(df_clean) >= 3:
-            features = df_clean[['duree_heures', 'impact_numerique']].dropna()
-            scaled = StandardScaler().fit_transform(features)
-            pca_result = PCA(n_components=2).fit_transform(scaled)
-            
-            fig, ax = plt.subplots(figsize=(10, 5))
-            scatter = ax.scatter(pca_result[:, 0], pca_result[:, 1], 
-                                c=features['duree_heures'], cmap='YlOrRd', s=80)
-            plt.colorbar(scatter, label="Durée (h)")
-            st.pyplot(fig)
-        else:
-            st.warning("Minimum 3 données pour l'ACP")
+    with col2:
+        # Jours de semaine
+        df['jour_semaine'] = pd.to_datetime(df['date_signalement']).dt.day_name()
+        jour_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        jour_counts = df['jour_semaine'].value_counts().reindex(jour_order)
+        fig_jours = px.bar(
+            x=jour_counts.index,
+            y=jour_counts.values,
+            title="Coupures par jour de semaine",
+            labels={'x': 'Jour', 'y': 'Nombre'}
+        )
+        st.plotly_chart(fig_jours, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # Analyse géographique
+    st.subheader("📍 Analyse géographique")
+    
+    # Heatmap des quartiers
+    quartier_impact = df.groupby(['zone', 'quartier']).size().reset_index(name='nombre')
+    fig_heat = px.density_heatmap(
+        quartier_impact,
+        x='zone',
+        y='quartier',
+        z='nombre',
+        title="Intensité des coupures par zone/quartier"
+    )
+    st.plotly_chart(fig_heat, use_container_width=True)
+    
+    # Top quartiers touchés
+    top_quartiers = df['quartier'].value_counts().head(10)
+    fig_top = px.bar(
+        x=top_quartiers.values,
+        y=top_quartiers.index,
+        orientation='h',
+        title="Top 10 des quartiers les plus touchés"
+    )
+    st.plotly_chart(fig_top, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # Corrélations
+    st.subheader("🔍 Corrélations")
+    
+    # Tableau croisé impact vs type
+    impact_type = pd.crosstab(df['impact'], df['type_coupure'])
+    fig_cross = px.imshow(
+        impact_type,
+        text_auto=True,
+        aspect="auto",
+        title="Corrélation entre type et impact des coupures"
+    )
+    st.plotly_chart(fig_cross, use_container_width=True)
+    
+    # Durée moyenne par type
+    duree_type = df.groupby('type_coupure')['duree'].mean().reset_index()
+    fig_duree_type = px.bar(
+        duree_type,
+        x='type_coupure',
+        y='duree',
+        title="Durée moyenne par type de coupure"
+    )
+    st.plotly_chart(fig_duree_type, use_container_width=True)
+    
 else:
-    st.warning("Ajoutez au moins 2 signalements pour les analyses")
+    st.warning("⚠️ Données insuffisantes pour les analyses")
+    st.info("Ajoutez plus de signalements pour voir les analyses")
