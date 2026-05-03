@@ -1,7 +1,7 @@
 import streamlit as st
 from utils import load_data
 
-# Configuration de la page (une seule fois)
+# Configuration de la page
 st.set_page_config(
     page_title="BOWA · Coupures Électriques",
     page_icon="⚡",
@@ -9,7 +9,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Sidebar (commune à toutes les pages)
+# Sidebar commune
 with st.sidebar:
     st.markdown("""
     <div style='padding: 20px 0 10px;'>
@@ -23,19 +23,17 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     # Menu de navigation
-    page = st.radio("", [
-        "📝 Nouveau signalement",
-        "📋 Données brutes", 
-        "📊 Tableau de bord",
-        "📈 Analyses",
-        "⚙️ À propos"
-    ], label_visibility="collapsed")
+    page = st.radio(
+        "Navigation",
+        ["📝 Nouveau signalement", "📋 Données brutes", "📊 Tableau de bord", "📈 Analyses", "⚙️ À propos"],
+        label_visibility="collapsed"
+    )
     
     st.markdown("<hr>", unsafe_allow_html=True)
     
-    # Stats rapides dans la sidebar
+    # Stats dans sidebar
     df = load_data()
-    if df is not None:
+    if df is not None and not df.empty:
         st.markdown(f"""
         <div style='background:#1A2040; border-radius:12px; padding:16px;'>
             <p style='font-size:0.7rem; color:#7A8099;'>Signalements totaux</p>
@@ -50,24 +48,14 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# Affichage du contenu selon la page sélectionnée
+# Navigation sans exec()
 if page == "📝 Nouveau signalement":
-    # Importer et exécuter la page
-    import pages.page1_nouveau_signalement as page1
-    page1.show()
-    
+    exec(open("pages/1_nouveau_signalement.py").read())
 elif page == "📋 Données brutes":
-    import pages.page2_donnees_brutes as page2
-    page2.show()
-    
+    exec(open("pages/2_donnees_brutes.py").read())
 elif page == "📊 Tableau de bord":
-    import pages.page3_tableau_de_bord as page3
-    page3.show()
-    
+    exec(open("pages/3_tableau_de_bord.py").read())
 elif page == "📈 Analyses":
-    import pages.page4_analyses as page4
-    page4.show()
-    
+    exec(open("pages/4_analyses.py").read())
 elif page == "⚙️ À propos":
-    import pages.page5_a_propos as page5
-    page5.show()
+    exec(open("pages/5_a_propos.py").read())
