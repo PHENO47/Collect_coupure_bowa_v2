@@ -1,4 +1,5 @@
 import streamlit as st
+from utils import load_data
 
 # Configuration de la page (une seule fois)
 st.set_page_config(
@@ -33,7 +34,6 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
     
     # Stats rapides dans la sidebar
-    from utils import load_data
     df = load_data()
     if df is not None:
         st.markdown(f"""
@@ -50,14 +50,24 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# Redirection vers la page sélectionnée
+# Affichage du contenu selon la page sélectionnée
 if page == "📝 Nouveau signalement":
-    exec(open("pages/1_nouveau_signalement.py").read())
+    # Importer et exécuter la page
+    import pages.page1_nouveau_signalement as page1
+    page1.show()
+    
 elif page == "📋 Données brutes":
-    exec(open("pages/2_donnees_brutes.py").read())
+    import pages.page2_donnees_brutes as page2
+    page2.show()
+    
 elif page == "📊 Tableau de bord":
-    exec(open("pages/3_tableau_de_bord.py").read())
+    import pages.page3_tableau_de_bord as page3
+    page3.show()
+    
 elif page == "📈 Analyses":
-    exec(open("pages/4_analyses.py").read())
+    import pages.page4_analyses as page4
+    page4.show()
+    
 elif page == "⚙️ À propos":
-    exec(open("pages/5_a_propos.py").read())
+    import pages.page5_a_propos as page5
+    page5.show()
