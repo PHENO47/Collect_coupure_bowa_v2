@@ -1,6 +1,6 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-import pandas as pd
+import pandas as pd  # <---- AJOUT
 from utils import load_data
 
 st.markdown("## 📊 Tableau de bord")
@@ -42,8 +42,9 @@ if df is not None and len(df) > 0:
         st.markdown("#### 🎯 Répartition par zone")
         if 'zone' in df_clean.columns:
             zones = df_clean['zone'].value_counts().head(5)
-            fig, ax = plt.subplots()
-            ax.barh(zones.index, zones.values, color='#FF6B35')
-            st.pyplot(fig)
+            if len(zones) > 0:
+                fig, ax = plt.subplots()
+                ax.barh(zones.index, zones.values, color='#FF6B35')
+                st.pyplot(fig)
 else:
     st.info("Aucune donnée disponible")
